@@ -5,12 +5,21 @@
 #
 #   movies = Movie.create([{ name: "Star Wars" }, { name: "Lord of the Rings" }])
 #   Character.create(name: "Luke", movie: movies.first)
-puts 'Cleaning database...'
 
-Monument.destroy_all
+url = "https://gist.githubusercontent.com/ssaunier/be9a933b64116e2422176aab7528473e/raw/d1e1b06e25616771fddf44bf066765f518b0655d/imdb.yml"
+sample = YAML.load(URI.parse(url).read)
 
-puts "Populating database.."
-Monument.create(name: "Eiffel tower", address: "Champ de Mars, 5 Av. Anatole France, 75007 Paris", opening_date: "1889/03/31")
-Monument.create(name: "Statue of Liberty", address: "New York, État de New York 10004, États-Unis", opening_date: "1886/10/28")
+puts "Creating directors..."
+directors = {} # slug => Director
+sample["directors"].each do |director|
+  directors[director["slug"]] = Director.create!(director.slice("first_name", "last_name"))
+end
 
-puts "Finished zo/"
+puts "Creating movies..."
+sample["movies"].each do |movie|
+  Movie.create!(movie.slice("title", "year", "synopsis").merge(director: directors[movie["director_slug"]]))
+end
+
+puts "Creating TV shows..."
+sample["tv_shows"].each { |tv_show| TvShow.create!(tv_show) }
+puts "Done."
